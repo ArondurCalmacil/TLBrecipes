@@ -2,16 +2,17 @@ import recipes
 
 def find_recipes_by_ingredients(user_ingredients, recipes_list):
     matching_recipes = []
+    user_ingredients = [ingredient.lower() for ingredient in user_ingredients]
     for recipe in recipes_list:
         # Check if every ingredient in the recipe is found in the user's ingredients list
-        if all(ingredient in user_ingredients for ingredient in recipe["ingredients"]):
+        if any(user_ingredient in ingredient.lower() for user_ingredient in user_ingredients for ingredient in recipe["ingredients"]):
             matching_recipes.append(recipe)
     return matching_recipes
 
 def get_user_ingredients():
     # Get the user's ingredients from input, separated by commas
     user_input = input("Enter the ingredients you have at home, separated by commas: ")
-    return [ingredient.strip() for ingredient in user_input.split(",")]
+    return [ingredient.strip().lower() for ingredient in user_input.split(",")]
 
 def display_recipes(recipes):
     # Display the recipes or a message if no matching recipes are found
