@@ -1,47 +1,103 @@
-import recipes  
+import requests  
 
-def find_recipes_by_ingredients(user_ingredients, recipes_list):
-    matching_recipes = []
-    user_ingredients = [ingredient.lower() for ingredient in user_ingredients]
-    for recipe in recipes_list:
-        # Check if every ingredient in the recipe is found in the user's ingredients list
-        if any(user_ingredient in ingredient.lower() for user_ingredient in user_ingredients for ingredient in recipe["ingredients"]):
-            matching_recipes.append(recipe)
-    return matching_recipes
+API_HOST = "the-cocktail-db.p.rapidapi.com"  
+API_KEY = "540b011b8fmshbd4250a8cc9bba9p146cbdjsn9edcab48a0f8"  
 
-def get_user_ingredients():
-    # Get the user's ingredients from input, separated by commas
-    user_input = input("Enter the ingredients you have at home, separated by commas: ")
-    return [ingredient.strip().lower() for ingredient in user_input.split(",")]
+def getInput():
+    print("Enter:\n1: Filter by Cocktail Name\n2: Filter by Ingredient")
+    choice = input("Select 1 or 2: ").strip()
 
-def display_recipes(recipes):
-    # Display the recipes or a message if no matching recipes are found
-    if not recipes:
-        print("Sorry, no recipes match your ingredients.")
-        return
-    
-    for recipe in recipes:
-        print(f"\nRecipe: {recipe['name']}")
-        print("Ingredients:")
-        for ingredient in recipe["ingredients"]:
-            print(f"- {ingredient}")
-        print(f"Instructions: {recipe['instructions']}\n")
+    if choice == "1":
+        name = input("Enter the cocktail name: ").strip()
+        return {"type": "name", "value": name}
+    elif choice == "2":
+        ingredients = input ("Enter the list of ingredients (seperated by a comma): ").strip()
+        return {"type": "ingredients", "value": ingredients}
 
-def main():
-    # Get user input for ingredients
-    user_ingredients = get_user_ingredients()
-    
-    # Debugging: Show the list of ingredients the user entered
-    print(f"User ingredients: {user_ingredients}")
-    
-    # Get matching recipes from the recipes list
-    matching_recipes = find_recipes_by_ingredients(user_ingredients, recipes.recipes)
-    
-    # Debugging: Show matching recipes (if any)
-    print(f"\nMatching recipes: {matching_recipes}")  # Check if the list is populated
-    
-    # Display the matching recipes
-    display_recipes(matching_recipes)
+def filterByName(name):
+    url = f"https://{API_HOST}/search.php"
+    headers = {"x-rapidapi-host": API_HOST, "x-rapidapi-key": API_KEY}
+    params = {"s": name}
 
-if __name__ == "__main__":
+    response = requests.get(url, headers=headers, params=params)  
+    if response.status_code == 200:  
+        return response.json().get("drinks", []) 
+
+def filterByIngredient(ingredients):
+    url = f"https://{API_HOST}/filter.php"
+    headers = {"x-rapidapi-host": API_HOST, "x-rapidapi-key": API_KEY}
+    ingredientsList = [ingredient.strip() for ingredient in ingredients.split(",") if ingredient.strip()]  
+    params = {"i": ",".join(ingredientsList)}  
+
+    response = requests.get(url, headers=headers, params=params)  
+    if response.status_code == 200:  
+        return response.json().get("drinks", []) 
+
+def getCocktailDetails(name):  
+    url = f"https://{API_HOST}/search.php"  
+    headers = {"x-rapidapi-host": API_HOST, "x-rapidapi-key": API_KEY}  
+    params = {"s": name}  
+
+    response = requests.get(url, headers=headers, params=params)  
+    if response.status_code == 200:  
+        drinks = response.json().get("drinks", [])  
+        return drinks[0] if drinks else None  
+    return None  
+
+def displayName(cocktails):
+    if not cocktails:
+        print("No matching cocktails found")
+    
+    for cocktail in cocktails:
+        if cocktail:  
+            print("\n---------------------------")  
+            print(f"Name: {cocktail.get('strDrink', 'Name not available')}")  
+
+            print("Ingredients:")  
+            for i in range(1, 16):  
+                ingredient = cocktail.get(f'strIngredient{i}')  
+                measure = cocktail.get(f'strMeasure{i}')  
+                if ingredient:  
+                    print(f"{measure} {ingredient}")  
+            
+            instructions = cocktail.get('strInstructions', 'Instructions not available.')  
+            print(f"Instructions: {instructions}")  
+            print("---------------------------\n")  
+        else:  
+            print(f"Details for {cocktail.get('strDrink')} not found.")  
+
+def displayResult(cocktails):
+    if not cocktails:
+        print("No matching cocktails found")
+    
+    for cocktail in cocktails:
+        coctailInfo = getCocktailDetails(cocktail.get('strDrink'))  
+
+        if coctailInfo:  
+            print("\n---------------------------")  
+            print(f"Name: {coctailInfo.get('strDrink', 'Name not available')}")  
+
+            print("Ingredients:")  
+            for i in range(1, 16):  
+                ingredient = coctailInfo.get(f'strIngredient{i}')  
+                measure = coctailInfo.get(f'strMeasure{i}')  
+                if ingredient:  
+                    print(f"{measure} {ingredient}")  
+            
+            instructions = coctailInfo.get('strInstructions', 'Instructions not available.')  
+            print(f"Instructions: {instructions}")  
+            print("---------------------------\n")  
+        else:  
+            print(f"Details for {cocktail.get('strDrink')} not found.")  
+
+def main():  
+    user_input = getInput()  
+    if user_input["type"] == "name":  
+        cocktails = filterByName(user_input["value"])  
+        displayName(cocktails)  
+    if user_input["type"] == "ingredients":  
+        cocktails = filterByIngredient(user_input["value"])  
+        displayResult(cocktails)  
+
+if __name__ == "__main__":  
     main()
