@@ -71,11 +71,11 @@ def displayResult(cocktails):
         print("No matching cocktails found")
     
     for cocktail in cocktails:
-        coctailInfo = getCocktailDetails(cocktail.get('strDrink'))  
+        coctailInfo = getCocktailDetails(cocktail.get('strDrink', 'Name not available'))  
 
         if coctailInfo:  
             print("\n---------------------------")  
-            print(f"Name: {coctailInfo.get('strDrink', 'Name not available')}")  
+            print(f"Name: {coctailInfo.get('strDrink')}")  
 
             print("Ingredients:")  
             for i in range(1, 16):  
